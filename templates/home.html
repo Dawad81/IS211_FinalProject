@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block content %}
+<form action="/addpost" method="post">
+    <input type=hidden  name="addpost">
+    <input type="submit" value="Add New Post">
+</form>
+    {% for post in posts %}
+        <h1>{{ post.title }}</h1>
+        <p>By {{ post.author }} on {{ post.date_posted }}</p>
+        <p>{{ post.content }}</p>
+        <form action="/delete" method="post">
+            <input type=hidden value="{{post.title}}" name="delete">
+            <input type="submit" value="Delete">
+        </form>
+        <form action="/edit" method="post">
+            <input type=hidden value="{{post.title}}" name="edit">
+            <input type="submit" value="Edit">
+        </form>
+    {% endfor %}
+{% endblock content %}
