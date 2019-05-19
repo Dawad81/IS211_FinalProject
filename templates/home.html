@@ -1,19 +1,28 @@
 {% extends "layout.html" %}
 {% block content %}
-<form action="/addpost" method="post">
-    <input type="submit" value="Add New Post">
-</form>
-    {% for post in posts %}
-        <h1>{{ post.title }}</h1>
-        <p>By {{ post.author }} on {{ post.date }}</p>
-        <p>{{ post.content }}</p>
-        <form action="/delete" method="post">
-            <input type=hidden value="{{post.content}}" name="delete">
-            <input type="submit" value="Delete">
+<h1>Click log in to access your account.</h1>
+<form name="home" action="/" method="post">
+            <input type="submit" value="Log In">
         </form>
-        <form action="/edit" method="post">
-            <input type=hidden value="{{post.content}}" name="edit">
-            <input type="submit" value="Edit">
-        </form>
+
+<table class="centered thick-border" border="1" >
+		<tr>
+			<th>Title</th>
+			<th>Blog Id#</th>
+			<th>Content</th>
+            <th>Date Posted</th>
+			 <th>Category</th>
+		</tr>
+    {% for dict in posts %}
+        <tr>
+            <td>{{dict.title}}</td>
+            <td>{{dict.blog_id}}</td>
+            <td>{{dict.content}}</td>
+            <td>{{dict.date}}</td>
+            <td>{{dict.category}}</td>
+        </tr>
     {% endfor %}
+</table>
+
+
 {% endblock content %}

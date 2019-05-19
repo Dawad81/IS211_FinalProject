@@ -1,43 +1,47 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1>Edit post</h1>
+<h1>Edit Post</h1>
 	<table class="centered thick-border">
 		<tr>
-			<th>Author</th>
+<th>Author</th>
 			<th>Title</th>
+			<th>Blog Id#</th>
 			<th>Content</th>
             <th>Date Posted</th>
+			 <th>Category</th>
 		</tr>
-		{% for dict in posts %}
-            {% if dict.content == edit_post %}
-				<tr>
-					<td>{{dict.author}}</td>
-					<td>{{dict.title}}</td>
-					<td>{{dict.content}}</td>
-                    <td>{{dict.date}}</td>
-					<td>
-						<form action="/delete" method="post">
-							<input type="hidden" value="{{dict.content}}" name="delete">
-							<input type="submit" value="Delete">
-						</form>
-					</td>
+{% if author_name %}
+       <td>{{author_name}}</td>
+	{% endif %}
+					{% for dict in posts %}
+            			{% if dict.content == edit_post %}
+						<td>{{dict.title}}</td>
+						<td>{{dict.blog_id}}</td>
+						<td>{{dict.content}}</td>
+						<td>{{dict.date}}</td>
+						<td>{{dict.category}}</td>
+						<td>
+							<form action="/delete" method="post">
+								<input type="hidden" value="{{dict.content}}" name="delete">
+								<input type="submit" value="Delete">
+							</form>
+						</td>
 				</tr>
+		</table>
+<br>
+<br>
+		<table class="centered thick-border">
 				<tr>
 					<form action="/editpost" method="post">
 						<input type="hidden" value="{{dict.content}}" name="del">
-						<input type="hidden" value="{{dict.author}}" name="author">
-						<input type="text" name="title" value="{{dict.title}}" placeholder="Enter New Title">
-						<input type="date" name="date" placeholder="yyyy-mm-dd">
+						<input type="hidden" value="{{dict.category}}" name="category">
+						<input type="hidden" value="{{author_name}}" name="author">
+						<input type="hidden" value="{{dict.title}}" name="title">
+						<input type="hidden" name="date" value="{{timestamp}}" >
 						<br>
-						<textarea name="content" cols="100" rows="20" value="{{dict.content}}" >{{dict.content}}</textarea>
+						<textarea name="content" cols="100" rows="20" placeholder="ENTER NEW EDITED POST CONTENT HERE "></textarea>
 						<br>
 						<input type="submit" value="Submit Edited Post">
-					</form>
-					<form action="/clear" method="post">
-						<input type="submit" value="Clear">
-					</form>
-					<form action="/save" method="post">
-						<input type="submit" value="Save">
 					</form>
 				</tr>
             {% endif %}

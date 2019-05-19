@@ -2,68 +2,78 @@
 # -*- coding: utf-8 -*-
 """Docstring."""
 
-import os
-import pickle
+
+import datetime
+import sqlite3
+
 from flask import (Flask, request, session, g, url_for, redirect,
                    render_template, flash)
-#from flask_sqlalchemy import SQLAlchemy
+from flask_bootstrap import Bootstrap
 
+DATABASE = 'post.db'
+SECRET_KEY = '.g*lVD?s?HU?Ƅ?'
 
-SECRET_KEY = '.g*lVD?s?hU?Ƅ?'
-USERNAME = 'admin'
-PASSWORD = 'password'
 
 
 app = Flask(__name__)
+Bootstrap(app)
 app.config.from_object(__name__)
 
-#TODO revers cronological order
-# re work rout url table
-# then after log in be able to make changes,
-# implement sqlite3 as data base
-# work on boot strap/css
+
+@app.before_request
+def before_request():
+    g.db = get_db()
 
 
-# posts = [
-#     {
-#         'author': 'Dennis Awad',
-#         'title': 'Blog Post #1',
-#         'content': 'First post of blog material klashfakjhgauhgairhgubrigubariubg',
-#         'date_posted': 'April 1, 2019'
-#     },
-#     {
-#         'author': 'Nicole Almas',
-#         'title': 'Blog Post #32',
-#         'content': 'Second post of blog  material kiboviafpviuanpugnpunpouanb',
-#         'date_posted': 'April 2, 2019'
-#     }
-# ]
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
 
 
-@app.route("/")
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
+
+@app.route('/', methods=['POST', 'GET'])
+def home():
+    if request.method == 'GET':
+        blogpost_info = g.db.execute('SELECT * FROM blogpost ORDER BY date DESC')
+        posts = []
+        for row in blogpost_info:
+            posts.append(
+                {'blog_id': row[0], 'title': row[1], 'content': row[2], 'date': row[3], 'category': row[4]})
+        return render_template('home.html', posts=posts, title='Home')
+    elif request.method == 'POST':
+        return redirect('/login')
+
+
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     error = None
     if request.method == 'POST':
-        if request.form['username'] != USERNAME:
-            session['logged_in'] = False
-            error = 'The username you entered is incorrect. Please re-enter ' \
-                    'a valid username.'
-            flash('The username you entered is incorrect. Please re-enter a '
-                  'valid username.', 'error')
-            return render_template('login.html', error=error)
-        elif request.form['password'] != PASSWORD:
-            session['logged_in'] = False
-            error = 'The password you entered is incorrect. Please re-enter ' \
-                    'the valid password for this username.'
-            flash('The password you entered is incorrect. Please re-enter '
-                  'the valid password for this username.')
-            return render_template('login.html', error=error)
+        htmlusername = request.form['username']
+        htmlpassword = request.form['password']
+        author_info = g.db.execute('SELECT * FROM authors WHERE username = ?', (htmlusername,))
+        author = [dict(user_id=row[0], first_name=row[1], last_name=row[2], username=row[3], password=row[4])for row in author_info.fetchall()]
+        if not author:
+            flash('Username entered is invalid! Please re-enter a valid username.', error)
+            return redirect('/login')
+        if htmlpassword != author[0]['password']:
+            flash('Password enter is invalid! Please re-enter a valid password for {}'.format(htmlusername))
+            return redirect('/login')
         else:
             session['logged_in'] = True
+            session['username'] = htmlusername
+            session['password'] = htmlpassword
             return redirect('/dashboard')
     else:
         return render_template('login.html', error=error)
+
 
 
 @app.route('/dashboard', methods=['GET'])
@@ -73,7 +83,21 @@ def dashboard():
               'error')
         return redirect(url_for('login'))
     else:
-        return render_template('home.html', posts=posts, title='Dashboard')
+        if request.method == 'GET':
+            author_info = g.db.execute('SELECT * FROM authors WHERE username = ?', (session['username'],))
+            author = [dict(user_id=row[0], first_name=row[1], last_name=row[2], username=row[3], password=row[4]) for row in author_info.fetchall()]
+            author_name = author[0]['first_name'] + ' ' + author[0]['last_name']
+            user_id_num = author[0]['user_id']
+            published_info = g.db.execute('SELECT * FROM published WHERE user_id = ?', (user_id_num,))
+            published = [i for i in published_info.fetchall()]
+            published_list = [i[1] for i in published]
+            posts = []
+            for item in published_list:
+                blogpost_info = g.db.execute('SELECT * FROM blogpost WHERE blog_id = ?', (item,))
+                for row in blogpost_info:
+                    posts.append(
+                        {'blog_id': row[0], 'title': row[1], 'content': row[2], 'date': row[3], 'category': row[4]})
+            return render_template('dashboard.html', posts=posts, author_name=author_name, title='Dashboard')
 
 
 @app.route('/edit', methods=['POST', 'GET'])
@@ -84,8 +108,31 @@ def edit():
         return redirect(url_for('login'))
     else:
         if request.method == 'POST':
+            timestamp = datetime.datetime.now()
+            author_info = g.db.execute('SELECT * FROM authors WHERE username = ?', (session['username'],))
+            author = [dict(user_id=row[0], first_name=row[1], last_name=row[2], username=row[3], password=row[4]) for row in author_info.fetchall()]
+            print 'authordict=', author
+
+            author_name = author[0]['first_name'] + ' ' + author[0]['last_name']
+            print 'authorname=' + author_name
+            user_id_num = author[0]['user_id']
+            print 'useridnum=', user_id_num
+            published_info = g.db.execute('SELECT * FROM published WHERE user_id = ?', (user_id_num,))
+            print published_info
+            published = [i for i in published_info.fetchall()]
+            print 'published=', published
+            published_list = [i[1] for i in published]
+            print 'publishedlist=', published_list
+            posts = []
+            for item in published_list:
+                blogpost_info = g.db.execute('SELECT * FROM blogpost WHERE blog_id = ?', (item,))
+                print blogpost_info
+                for row in blogpost_info:
+                    posts.append(
+                        {'blog_id': row[0], 'title': row[1], 'content': row[2], 'date': row[3], 'category': row[4]})
+                print posts
             edit_post = request.form['edit']
-            return render_template('edit.html', edit_post=edit_post, posts=posts, title='Edit Post')
+            return render_template('edit.html', edit_post=edit_post, posts=posts, author_name=author_name, title='Edit Post', timestamp=timestamp)
 
 
 @app.route('/editpost', methods=['POST', 'GET'])
@@ -96,24 +143,16 @@ def editpost():
         return redirect(url_for('login'))
     else:
         if request.method == 'POST':
-            to_pickle_file = open('posts.pkl', 'wb')
-            posts.append({'author': request.form['author'],
-                          'title': request.form['title'],
-                          'content': request.form['content'],
-                          'date': request.form['date']})
-            pickle.dump(posts, to_pickle_file)
-            to_pickle_file.close()
-
-            delete_post = request.form['del']
-            for item in posts:
-                if item['content'] == delete_post:
-                    posts.remove(item)
-                    to_pickle_file = open('posts.pkl', 'wb')
-                    pickle.dump(posts, to_pickle_file)
-                    to_pickle_file.close()
+            timestamp = datetime.datetime.now()
+            author_info = g.db.execute('SELECT * FROM authors WHERE username = ?', (session['username'],))
+            author = [dict(user_id=row[0], first_name=row[1], last_name=row[2], username=row[3], password=row[4]) for
+                      row in author_info.fetchall()]
+            print 'authordict=', author
+            author_name = author[0]['first_name'] + ' ' + author[0]['last_name']
+            user_id_num = author[0]['user_id']
+            g.db.execute('UPDATE blogpost SET content=?,date=? Where content=?',(request.form['content'], timestamp, request.form['del']))
+            g.db.commit()
             return redirect('/dashboard')
-
-
 
 
 @app.route('/delete', methods=['POST'])
@@ -124,10 +163,29 @@ def delete():
         return redirect(url_for('login'))
     else:
         delete_post = request.form['delete']
-        for item in posts:
-            if item['content'] == delete_post:
-                posts.remove(item)
-                return redirect('/dashboard')
+        timestamp = datetime.datetime.now()
+        author_info = g.db.execute('SELECT * FROM authors WHERE username = ?', (session['username'],))
+        author = [dict(user_id=row[0], first_name=row[1], last_name=row[2], username=row[3], password=row[4]) for
+                  row in author_info.fetchall()]
+        print 'authordict=', author
+        author_name = author[0]['first_name'] + ' ' + author[0]['last_name']
+        print 'authorname=' + author_name
+        user_id_num = author[0]['user_id']
+        print 'useridnum=', user_id_num
+
+        blogpost_info = g.db.execute('SELECT * FROM blogpost WHERE content=?', (delete_post,))
+        posts = []
+        for row in blogpost_info:
+            posts.append(
+                {'blog_id': row[0], 'title': row[1], 'content': row[2], 'date': row[3], 'category': row[4]})
+        print 'this is post=', posts
+        blog_id_num = posts[0]['blog_id']
+        print 'blogidnum=', blog_id_num
+        g.db.execute('DELETE FROM blogpost WHERE content = ?', (delete_post,))
+        g.db.commit()
+        g.db.execute('DELETE FROM published Where blog_id=?', (blog_id_num,))
+        g.db.commit()
+        return redirect('/dashboard')
 
 
 @app.route('/addpost', methods=['POST', 'GET'])
@@ -140,9 +198,8 @@ def addpost():
             return render_template('addpost.html', title='Add New Post')
 
 
-
 @app.route('/submit', methods=['POST', 'GET'])
-def submit():#Todo this is not recognizing empty feilds
+def submit():
     if session['logged_in'] == False:
         flash("You are not logged in! Please login to access the site.",
               'error')
@@ -155,37 +212,38 @@ def submit():#Todo this is not recognizing empty feilds
             elif request.form['content'] == "":
                 flash('Blog post field empty. Please enter Blog post and re-submit')
                 return redirect(url_for('addpost'))
-            elif request.form['date'] == "":
-                flash('Date field empty. Please enter a valid date and re-submit.')
-                return redirect(url_for('addpost'))
+
             else:
-                to_pickle_file = open('posts.pkl', 'wb')
-                posts.append({'author': request.form['author'],
-                              'title': request.form['title'],
-                              'content': request.form['content'],
-                              'date': request.form['date']})
-                pickle.dump(posts, to_pickle_file)
-                to_pickle_file.close()
-                return redirect(url_for('dashboard'))
+                timestamp = datetime.datetime.now()
+                author_info = g.db.execute('SELECT * FROM authors WHERE username = ?', (session['username'],))
+                author = [dict(user_id=row[0], first_name=row[1], last_name=row[2], username=row[3], password=row[4])
+                          for
+                          row in author_info.fetchall()]
+                print 'authordict=', author
 
+                author_name = author[0]['first_name'] + ' ' + author[0]['last_name']
+                print 'authorname=' + author_name
+                user_id_num = author[0]['user_id']
+                print 'useridnum=', user_id_num
 
-@app.route('/save', methods=['POST'])
-def save():
-    to_pickle_file = open('posts.pkl', 'wb')
-    pickle.dump(posts, to_pickle_file)
-    to_pickle_file.close()
-    return redirect('/dashboard')
+                g.db.execute('INSERT INTO blogpost (title, content, date, category) VALUES (?,?,?,?)',
+                             (request.form['title'], request.form['content'], timestamp, request.form['category']))
+                g.db.commit()
+                blogpost_info = g.db.execute('SELECT * FROM blogpost WHERE content=?', (request.form['content'],))
+                posts = []
+                for row in blogpost_info:
+                    posts.append(
+                        {'blog_id': row[0], 'title': row[1], 'content': row[2], 'date': row[3], 'category': row[4]})
+                print 'this is post=', posts
+                blog_id_num = posts[0]['blog_id']
+                print 'blogidnum=', blog_id_num
 
+                g.db.execute('INSERT INTO published (user_id, blog_id, published) VALUES (?,?,?)',
+                             (user_id_num, blog_id_num, 01))
+                g.db.commit()
 
-def get_posts():
-    from_pickle_file = 'posts.pkl'
-    if os.path.exists(from_pickle_file):
-        posts = pickle.load(open(from_pickle_file, 'rb'))
-        return posts
-    else:
-        posts = []
-        return posts
+                return redirect('/dashboard')
+
 
 if __name__ == '__main__':
-    posts = get_posts()
     app.run(debug=True)

@@ -1,13 +1,14 @@
 {% extends "layout.html" %}
 {% block content %}
 <h1>Add New Post</h1>
-	<form action="/submit" method="post">
-        <input type=text name="author" placeholder="Authors name" >
-		<input type="text" name="title" placeholder="Enter Title">
-		<input type="date" name="date" placeholder="yyyy-mm-dd">
-        <br>
-        <textarea name="content" cols="100" rows="20"></textarea>
-        <br>
-		<input type="submit" value="Submit Post">
-	</form>
+<form action="/submit" method="post">
+	<input type="text" placeholder="Enter Category" name="category">
+	<input type="hidden" value="{{author_name}}" name="author">
+	<input type="text" placeholder="Enter Title" name="title">
+	<input type="hidden" name="date" value="{{timestamp}}" >
+	<br>
+	<textarea name="content" cols="100" rows="20" placeholder="ENTER A NEW POST"></textarea>
+	<br>
+	<input type="submit" value="Submit Post">
+</form>
 {% endblock content %}
