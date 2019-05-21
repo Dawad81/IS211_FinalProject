@@ -1,53 +1,49 @@
 {% extends "layout.html" %}
 {% block content %}
 <h1>Edit Post</h1>
-	<table class="centered thick-border">
-		<tr>
-<th>Author</th>
-			<th>Title</th>
-			<th>Blog Id#</th>
-			<th>Content</th>
-            <th>Date Posted</th>
-			 <th>Category</th>
-		</tr>
-{% if author_name %}
-       <td>{{author_name}}</td>
+<table class="centered thick-border">
+	<tr>
+		<th>Author</th>
+		<th>Title</th>
+		<th>Blog Id#</th>
+		<th>Content</th>
+		<th>Date Posted</th>
+		<th>Category</th>
+	</tr>
+	{% if author_name %}
+	<td>{{author_name}}</td>
 	{% endif %}
-					{% for dict in posts %}
-            			{% if dict.content == edit_post %}
-						<td>{{dict.title}}</td>
-						<td>{{dict.blog_id}}</td>
-						<td>{{dict.content}}</td>
-						<td>{{dict.date}}</td>
-						<td>{{dict.category}}</td>
-						<td>
-							<form action="/delete" method="post">
-								<input type="hidden" value="{{dict.content}}" name="delete">
-								<input type="submit" value="Delete">
-							</form>
-						</td>
-				</tr>
-		</table>
+	{% for dict in posts %}
+		{% if dict.content == edit_post %}
+			<td>{{dict.title}}</td>
+			<td>{{dict.blog_id}}</td>
+			<td>{{dict.content}}</td>
+			<td>{{dict.date}}</td>
+			<td>{{dict.category}}</td>
+			<td><form action="/delete" method="post">
+				<input type="hidden" value="{{dict.content}}" name="delete">
+				<input type="submit" value="Delete">
+				</form>
+			</td>
+	</tr>
+</table>
 <br>
 <br>
-		<table class="centered thick-border">
-				<tr>
-					<form action="/editpost" method="post">
-						<input type="hidden" value="{{dict.content}}" name="del">
-						<input type="hidden" value="{{dict.category}}" name="category">
-						<input type="hidden" value="{{author_name}}" name="author">
-						<input type="hidden" value="{{dict.title}}" name="title">
-						<input type="hidden" name="date" value="{{timestamp}}" >
-						<br>
-						<textarea name="content" cols="100" rows="20" placeholder="ENTER NEW EDITED POST CONTENT HERE "></textarea>
-						<br>
-						<input type="submit" value="Submit Edited Post">
-					</form>
-				</tr>
-            {% endif %}
-		{% endfor %}
-	</table>
-	<br>
-
-
+<table class="centered thick-border">
+	<tr>
+		<form action="/editpost" method="post">
+			<input type="hidden" value="{{dict.content}}" name="del">
+			<input type="hidden" value="{{dict.category}}" name="category">
+			<input type="hidden" value="{{author_name}}" name="author">
+			<input type="hidden" value="{{dict.title}}" name="title">
+			<input type="hidden" name="date" value="{{timestamp}}" >
+			<br>
+			<textarea name="content" cols="100" rows="20" placeholder="ENTER NEW EDITED POST CONTENT HERE "></textarea>
+			<br>
+			<input type="submit" value="Submit Edited Post">
+		</form>
+	</tr>
+		{% endif %}
+	{% endfor %}
+</table>
 {% endblock content %}
