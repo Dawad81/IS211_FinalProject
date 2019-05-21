@@ -3,17 +3,24 @@
 README Document for IS211 Final Project 
 
 To run flaskblog.py you will need to have installed:
-•	Flask
-•	flask_bootstrap
-•	sqlite3
+
+						•Flask
+
+						•flask_bootstrap
+
+						•sqlite3
 
 The way my flask blog works is on the route url all blog post from all users are displayed in reverse chronological order. 
 
 When the login button is clicked on it re-directs the visitor to log in. There are only 3 users with logins currently:
-		Author Name		Username	Password
-1.	Future Awad		Fawad		KidAwad
-2.	Dennis Awad		Dawad		sassmasterd
-3.	Nicole Almas		Nalmas		MrsAwad
+
+
+		Author Name			Username		Password
+
+	1.	Future Awad			Fawad			KidAwad
+	2.	Dennis Awad			Dawad			sassmasterd
+	3.	Nicole Almas			Nalmas			MrsAwad
+
 
 Once a user logs in it takes them to their user dashboard where only post by the user is displayed. They can choose to edit or delete a post or add a new post. 
 
